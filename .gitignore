@@ -1,2 +1,4 @@
 .vscode
 proj2-env
+create_table.sql
+import_data.sql
