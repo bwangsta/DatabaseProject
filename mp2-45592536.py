@@ -1,5 +1,6 @@
 import pymysql
 
+# Query: Find the cheapest flight given airports and a date.
 def cheapest_flight(cur):
     departure_code = input('Please enter airport code for the departure airport: ')
     arrival_code = input('Please enter the airport code for the destination airport: ')
@@ -7,9 +8,7 @@ def cheapest_flight(cur):
 
     sql = """SELECT flight_number, MIN(amount) 
             FROM fare NATURAL JOIN leg_instance 
-            WHERE departure_airport_code = %s AND arrival_airport_code = %s AND leg_date = %s
-            GROUP BY flight_number
-            LIMIT 1;"""
+            WHERE departure_airport_code = %s AND arrival_airport_code = %s AND leg_date = %s"""
 
     cur.execute(sql, (departure_code, arrival_code, date))
     
@@ -17,6 +16,7 @@ def cheapest_flight(cur):
         print(f'The cheapest flight is {flight_num}, and the cost is ${fare}')
 
 
+# Query: Find the flight and seat information for a customer.
 def flight_seat_info(cur):
     name = input("Please enter the customer's name: ")
 
@@ -30,8 +30,8 @@ def flight_seat_info(cur):
         print(f'The flight number is {flight_num}, and the seat number is {seat_num}')
 
 
+# Query: Find all non-stop flights for an airline.
 def nonstop_flights(cur):
-    # Find all non-stop flights for an airline.
     airline = input('What is the name of the airline? ')
 
     sql = """SELECT flight_number, COUNT(leg_number) AS total_legs
@@ -49,28 +49,34 @@ def nonstop_flights(cur):
     print(', '.join(flightlist))
 
 
+# Task: Add a new airplane.
 def add_airplane(db, cur):
-    # Add a new airplane.
-    # total_seats = input('Please enter the total number of seats: ')
-    # airplane_type = input('Please enter the airplane type: ')
-    total_seats = 400
-    airplane_type = 'B317'
+    # Asks user for number of seats and airplane type
+    total_seats = input('Please enter the total number of seats: ')
+    airplane_type = input('Please enter the airplane type: ')
 
-    sql1 = """INSERT INTO airplane
-            VALUES(DEFAULT, %s, %s)"""
+    sql1 = """SELECT MAX(airplane_id)
+             FROM airplane;"""
+
+    cur.execute(sql1)
+    plane_id = cur.fetchone()[0] + 1
+
+    sql2 = """INSERT INTO airplane
+            VALUES(%s, %s, %s)"""
     
-    cur.execute(sql1, (total_seats, airplane_type))
+    cur.execute(sql2, (plane_id, total_seats, airplane_type))
     db.commit()
 
-    sql2 = """SELECT airplane_id
+    sql3 = """SELECT airplane_id
             FROM airplane
             WHERE total_number_of_seats = %s AND airplane_type = %s;"""
 
-    cur.execute(sql2, (total_seats, airplane_type))
+    cur.execute(sql3, (total_seats, airplane_type))
 
     print(f'The new airplane has been added with id: {cur.fetchone()[0]}')
 
 
+# Increase low-cost fares(≤ 200) by a factor.
 def increase_fares(cur):
     factor = input('Please enter a factor (e.g. 0.2 will increase all fares by 20%): ')
     factor = str(float(0.2) + 1)
@@ -92,6 +98,7 @@ def increase_fares(cur):
     print(f'{num_updated} fares are affected.')
 
 
+# Remove a seat reservation.
 def remove_reservation(cur):
     flightnum = input('Please enter the flight number: ')
     name = input('Please enter the customer name: ')
@@ -103,7 +110,7 @@ def remove_reservation(cur):
     cur.execute(sql1, (flightnum, name))
     seatnum = cur.fetchone()[0]
 
-    sql2 = """DELETE seat_reservation
+    sql2 = """DELETE FROM seat_reservation
             WHERE flight_number = %s AND customer_name = %s"""
 
     cur.execute(sql2, (flightnum, name))
@@ -111,22 +118,42 @@ def remove_reservation(cur):
 
     print(f'Seat {seatnum} is released.')
 
-# def main():
-#     while True:
-#         query_choice = input('Pick a query')
 
-#         if query_choice = 'quit':
+def main():
+    print('1.) Find the cheapest flight given airports and a date.')
+    print('2.) Find the flight and seat information for a customer.')
+    print('3.) Find all non-stop flights for an airline.')
+    print('4.) Add a new airplane.')
+    print('5.) Increase low-cost fares(≤ 200) by a factor.')
+    print('6.) Remove a seat reservation.')
+
+    while True:
+        choice = input('CHOOSE A QUERY NUMBER (1-6): ').lower()
+
+        if choice == 'quit':
+            break
+        if choice == '1':
+            cheapest_flight(cur)
+        elif choice == '2':
+            flight_seat_info(cur)
+        elif choice == '3':
+            nonstop_flights(cur)
+        elif choice == '4':
+            add_airplane(db, cur)
+        elif choice == '5':
+            increase_fares(cur)
+        elif choice == '6':
+            remove_reservation(cur)
+        else:
+            print('Invalid Input. Please enter a number between 1-6')
 
 
 if __name__ == "__main__":
     db = pymysql.connect(host='localhost', user='mp2',
-                         passwd='Eeecs116', db='flights')
+                         passwd='eecs116', db='flights')
 
     cur = db.cursor()
-    # cheapest_flight(cur)
-    # flight_seat_info(cur)
-    # nonstop_flights(cur)
-    # add_airplane(db, cur)
-    # increase_fares(cur)
+
+    main()
 
     db.close()
