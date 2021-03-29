@@ -150,7 +150,7 @@ def main():
 
 if __name__ == "__main__":
     db = pymysql.connect(host='localhost', user='mp2',
-                         passwd='eecs116', db='flights')
+                         passwd='Eeecs116', db='flights')
 
     cur = db.cursor()
 
